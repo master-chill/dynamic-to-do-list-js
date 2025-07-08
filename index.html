@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced To-Do List</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(to right, #4776E6, #8E54E9);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.3rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            max-width: 400px;
+            margin: 10px auto 0;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 20px;
+            padding: 12px;
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .input-container {
+            display: flex;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        #task-input {
+            flex-grow: 1;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px 0 0 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #task-input:focus {
+            border-color: #8E54E9;
+        }
+
+        #add-task-btn {
+            padding: 0 25px;
+            background: linear-gradient(to right, #4776E6, #8E54E9);
+            color: white;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        #add-task-btn:hover {
+            background: linear-gradient(to right, #3a68d8, #7d4cdb);
+        }
+
+        .filter-container {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background-color: #e9ecef;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: linear-gradient(to right, #4776E6, #8E54E9);
+            color: white;
+        }
+
+        .task-list-container {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        #task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            background-color: white;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid #8E54E9;
+            position: relative;
+        }
+
+        .task-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-item.completed {
+            border-left-color: #4CAF50;
+            opacity: 0.8;
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        .task-checkbox {
+            margin-right: 15px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .task-text {
+            flex-grow: 1;
+            font-size: 17px;
+            color: #343a40;
+            word-break: break-word;
+            padding-right: 20px;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        .action-btn:hover {
+            background-color: #f1f1f1;
+        }
+
+        .edit-btn {
+            color: #ff9800;
+        }
+
+        .remove-btn {
+            color: #f44336;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #e0e0e0;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border-top: 1px solid #eaeaea;
+            font-size: 14px;
+        }
+
+        .highlight {
+            color: #8E54E9;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                max-width: 100%;
+            }
+            
+            .input-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            #task-input {
+                border-radius: 8px;
+            }
+            
+            #add-task-btn {
+                border-radius: 8px;
+                padding: 14px;
+                justify-content: center;
+            }
+            
+            .filter-container {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-tasks"></i> My To-Do List</h1>
+            <p class="subtitle">Organize your tasks and boost your productivity</p>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="total-tasks">0</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="completed-tasks">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="pending-tasks">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="input-container">
+            <input type="text" id="task-input" placeholder="Enter a new task...">
+            <button id="add-task-btn">
+                <i class="fas fa-plus"></i> Add Task
+            </button>
+        </div>
+        
+        <div class="filter-container">
+            <button class="filter-btn active" data-filter="all">All Tasks</button>
+            <button class="filter-btn" data-filter="active">Active</button>
+            <button class="filter-btn" data-filter="completed">Completed</button>
+        </div>
+        
+        <div class="task-list-container">
+            <ul id="task-list">
+                <div class="empty-state" id="empty-state">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h3>No tasks yet</h3>
+                    <p>Add your first task to get started!</p>
+                </div>
+            </ul>
+        </div>
+        
+        <footer>
+            <p>Double-click task to edit | <span class="highlight">To-Do List App</span> with Advanced Features</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const taskInput = document.getElementById('task-input');
+        const addTaskBtn = document.getElementById('add-task-btn');
+        const taskList = document.getElementById('task-list');
+        const emptyState = document.getElementById('empty-state');
+        const totalTasksEl = document.getElementById('total-tasks');
+        const completedTasksEl = document.getElementById('completed-tasks');
+        const pendingTasksEl = document.getElementById('pending-tasks');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        
+        // Current filter state
+        let currentFilter = 'all';
+        
+        // Task counter
+        let taskCount = 0;
+        let completedCount = 0;
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            updateTaskCounters();
+            updateEmptyState();
+            
+            // Load sample tasks for demo
+            setTimeout(() => {
+                if (taskCount === 0) {
+                    addTask('Create a to-do list app');
+                    addTask('Implement task completion');
+                    addTask('Add filtering functionality');
+                }
+            }, 1000);
+        });
+        
+        // Add task when button is clicked
+        addTaskBtn.addEventListener('click', () => {
+            const taskText = taskInput.value.trim();
+            if (taskText) {
+                addTask(taskText);
+                taskInput.value = '';
+                taskInput.focus();
+            }
+        });
+        
+        // Add task when Enter is pressed
+        taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTaskBtn.click();
+            }
+        });
+        
+        // Filter tasks
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Update active button
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Set current filter
+                currentFilter = button.dataset.filter;
+                
+                // Apply filter
+                applyFilter();
+            });
+        });
+        
+        // Add a new task
+        function addTask(text) {
+            // Create task element
+            const taskId = Date.now();
+            const taskItem = document.createElement('li');
+            taskItem.className = 'task-item';
+            taskItem.dataset.id = taskId;
+            taskItem.dataset.completed = 'false';
+            
+            taskItem.innerHTML = `
+                <input type="checkbox" class="task-checkbox">
+                <span class="task-text">${text}</span>
+                <div class="task-actions">
+                    <button class="action-btn edit-btn" title="Edit task">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="action-btn remove-btn" title="Remove task">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            `;
+            
+            // Insert at the top of the list
+            if (taskList.firstChild && taskList.firstChild.classList.contains('empty-state')) {
+                taskList.innerHTML = '';
+            }
+            taskList.prepend(taskItem);
+            
+            // Add event listeners to new task
+            const checkbox = taskItem.querySelector('.task-checkbox');
+            const editBtn = taskItem.querySelector('.edit-btn');
+            const removeBtn = taskItem.querySelector('.remove-btn');
+            const taskText = taskItem.querySelector('.task-text');
+            
+            checkbox.addEventListener('change', () => toggleTaskCompletion(taskItem));
+            removeBtn.addEventListener('click', () => removeTask(taskItem));
+            editBtn.addEventListener('click', () => editTask(taskText));
+            
+            // Enable double-click to edit
+            taskText.addEventListener('dblclick', () => editTask(taskText));
+            
+            // Update counters
+            taskCount++;
+            updateTaskCounters();
+            updateEmptyState();
+        }
+        
+        // Toggle task completion
+        function toggleTaskCompletion(taskItem) {
+            const isCompleted = taskItem.dataset.completed === 'true';
+            const checkbox = taskItem.querySelector('.task-checkbox');
+            
+            if (isCompleted) {
+                taskItem.dataset.completed = 'false';
+                taskItem.classList.remove('completed');
+                completedCount--;
+            } else {
+                taskItem.dataset.completed = 'true';
+                taskItem.classList.add('completed');
+                completedCount++;
+            }
+            
+            // Move completed tasks to the bottom
+            if (currentFilter === 'all') {
+                taskList.appendChild(taskItem);
+            }
+            
+            updateTaskCounters();
+        }
+        
+        // Remove a task
+        function removeTask(taskItem) {
+            if (taskItem.dataset.completed === 'true') {
+                completedCount--;
+            }
+            
+            taskItem.remove();
+            taskCount--;
+            
+            updateTaskCounters();
+            updateEmptyState();
+        }
+        
+        // Edit a task
+        function editTask(taskTextElement) {
+            const currentText = taskTextElement.textContent;
+            const inputElement = document.createElement('input');
+            inputElement.type = 'text';
+            inputElement.value = currentText;
+            inputElement.className = 'edit-input';
+            inputElement.style.width = '100%';
+            inputElement.style.padding = '8px';
+            inputElement.style.border = '2px solid #8E54E9';
+            inputElement.style.borderRadius = '4px';
+            
+            taskTextElement.replaceWith(inputElement);
+            inputElement.focus();
+            
+            inputElement.addEventListener('blur', () => {
+                finishEditing(inputElement, taskTextElement);
+            });
+            
+            inputElement.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    finishEditing(inputElement, taskTextElement);
+                }
+            });
+        }
+        
+        function finishEditing(inputElement, taskTextElement) {
+            const newText = inputElement.value.trim();
+            if (newText) {
+                taskTextElement.textContent = newText;
+            }
+            inputElement.replaceWith(taskTextElement);
+        }
+        
+        // Apply filter to tasks
+        function applyFilter() {
+            const tasks = document.querySelectorAll('.task-item');
+            
+            tasks.forEach(task => {
+                const isCompleted = task.dataset.completed === 'true';
+                
+                switch (currentFilter) {
+                    case 'all':
+                        task.style.display = 'flex';
+                        break;
+                    case 'active':
+                        task.style.display = isCompleted ? 'none' : 'flex';
+                        break;
+                    case 'completed':
+                        task.style.display = isCompleted ? 'flex' : 'none';
+                        break;
+                }
+            });
+        }
+        
+        // Update task counters
+        function updateTaskCounters() {
+            totalTasksEl.textContent = taskCount;
+            completedTasksEl.textContent = completedCount;
+            pendingTasksEl.textContent = taskCount - completedCount;
+        }
+        
+        // Update empty state display
+        function updateEmptyState() {
+            if (taskCount === 0) {
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced To-Do List</title>
+    <title>Persistent To-Do List</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -245,6 +245,17 @@
             color: #495057;
         }
 
+        .storage-indicator {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 12px;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
         footer {
             text-align: center;
             padding: 20px;
@@ -252,6 +263,7 @@
             color: #6c757d;
             border-top: 1px solid #eaeaea;
             font-size: 14px;
+            position: relative;
         }
 
         .highlight {
@@ -288,8 +300,8 @@
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-tasks"></i> My To-Do List</h1>
-            <p class="subtitle">Organize your tasks and boost your productivity</p>
+            <h1><i class="fas fa-tasks"></i> Persistent To-Do List</h1>
+            <p class="subtitle">Your tasks are saved automatically to local storage</p>
             <div class="stats">
                 <div class="stat-item">
                     <div class="stat-value" id="total-tasks">0</div>
@@ -330,7 +342,11 @@
         </div>
         
         <footer>
-            <p>Double-click task to edit | <span class="highlight">To-Do List App</span> with Advanced Features</p>
+            <p>Double-click task to edit | <span class="highlight">Local Storage</span> Persistence</p>
+            <div class="storage-indicator">
+                <i class="fas fa-database"></i>
+                <span id="storage-status">Storage ready</span>
+            </div>
         </footer>
     </div>
 
@@ -344,27 +360,36 @@
         const completedTasksEl = document.getElementById('completed-tasks');
         const pendingTasksEl = document.getElementById('pending-tasks');
         const filterButtons = document.querySelectorAll('.filter-btn');
+        const storageStatus = document.getElementById('storage-status');
         
         // Current filter state
         let currentFilter = 'all';
         
-        // Task counter
-        let taskCount = 0;
-        let completedCount = 0;
-        
         // Initialize the app
         document.addEventListener('DOMContentLoaded', () => {
-            updateTaskCounters();
-            updateEmptyState();
+            // Check if localStorage is available
+            if (typeof(Storage) !== "undefined") {
+                storageStatus.textContent = "Local storage ready";
+                storageStatus.style.color = "#4CAF50";
+            } else {
+                storageStatus.textContent = "Local storage not available!";
+                storageStatus.style.color = "#f44336";
+            }
             
-            // Load sample tasks for demo
-            setTimeout(() => {
-                if (taskCount === 0) {
-                    addTask('Create a to-do list app');
-                    addTask('Implement task completion');
-                    addTask('Add filtering functionality');
-                }
-            }, 1000);
+            loadTasks();
+            updateUI();
+            
+            // Add sample tasks if none exist
+            if (!localStorage.getItem('tasks')) {
+                setTimeout(() => {
+                    if (taskList.children.length === 1) {
+                        addTask('Create a to-do list app');
+                        addTask('Implement local storage');
+                        addTask('Add task completion');
+                        saveTasks();
+                    }
+                }, 1000);
+            }
         });
         
         // Add task when button is clicked
@@ -374,6 +399,7 @@
                 addTask(taskText);
                 taskInput.value = '';
                 taskInput.focus();
+                saveTasks();
             }
         });
         
@@ -400,16 +426,20 @@
         });
         
         // Add a new task
-        function addTask(text) {
+        function addTask(text, completed = false, fromStorage = false) {
             // Create task element
             const taskId = Date.now();
             const taskItem = document.createElement('li');
             taskItem.className = 'task-item';
             taskItem.dataset.id = taskId;
-            taskItem.dataset.completed = 'false';
+            taskItem.dataset.completed = completed;
+            
+            if (completed) {
+                taskItem.classList.add('completed');
+            }
             
             taskItem.innerHTML = `
-                <input type="checkbox" class="task-checkbox">
+                <input type="checkbox" class="task-checkbox" ${completed ? 'checked' : ''}>
                 <span class="task-text">${text}</span>
                 <div class="task-actions">
                     <button class="action-btn edit-btn" title="Edit task">
@@ -425,7 +455,12 @@
             if (taskList.firstChild && taskList.firstChild.classList.contains('empty-state')) {
                 taskList.innerHTML = '';
             }
-            taskList.prepend(taskItem);
+            
+            if (fromStorage) {
+                taskList.appendChild(taskItem);
+            } else {
+                taskList.prepend(taskItem);
+            }
             
             // Add event listeners to new task
             const checkbox = taskItem.querySelector('.task-checkbox');
@@ -433,53 +468,26 @@
             const removeBtn = taskItem.querySelector('.remove-btn');
             const taskText = taskItem.querySelector('.task-text');
             
-            checkbox.addEventListener('change', () => toggleTaskCompletion(taskItem));
-            removeBtn.addEventListener('click', () => removeTask(taskItem));
+            checkbox.addEventListener('change', () => {
+                taskItem.dataset.completed = checkbox.checked;
+                taskItem.classList.toggle('completed', checkbox.checked);
+                updateTaskCounters();
+                saveTasks();
+            });
+            
+            removeBtn.addEventListener('click', () => {
+                taskItem.remove();
+                updateUI();
+                saveTasks();
+            });
+            
             editBtn.addEventListener('click', () => editTask(taskText));
             
             // Enable double-click to edit
             taskText.addEventListener('dblclick', () => editTask(taskText));
             
-            // Update counters
-            taskCount++;
-            updateTaskCounters();
-            updateEmptyState();
-        }
-        
-        // Toggle task completion
-        function toggleTaskCompletion(taskItem) {
-            const isCompleted = taskItem.dataset.completed === 'true';
-            const checkbox = taskItem.querySelector('.task-checkbox');
-            
-            if (isCompleted) {
-                taskItem.dataset.completed = 'false';
-                taskItem.classList.remove('completed');
-                completedCount--;
-            } else {
-                taskItem.dataset.completed = 'true';
-                taskItem.classList.add('completed');
-                completedCount++;
-            }
-            
-            // Move completed tasks to the bottom
-            if (currentFilter === 'all') {
-                taskList.appendChild(taskItem);
-            }
-            
-            updateTaskCounters();
-        }
-        
-        // Remove a task
-        function removeTask(taskItem) {
-            if (taskItem.dataset.completed === 'true') {
-                completedCount--;
-            }
-            
-            taskItem.remove();
-            taskCount--;
-            
-            updateTaskCounters();
-            updateEmptyState();
+            // Update UI
+            updateUI();
         }
         
         // Edit a task
@@ -514,6 +522,7 @@
                 taskTextElement.textContent = newText;
             }
             inputElement.replaceWith(taskTextElement);
+            saveTasks();
         }
         
         // Apply filter to tasks
@@ -539,17 +548,80 @@
         
         // Update task counters
         function updateTaskCounters() {
-            totalTasksEl.textContent = taskCount;
-            completedTasksEl.textContent = completedCount;
-            pendingTasksEl.textContent = taskCount - completedCount;
+            const tasks = document.querySelectorAll('.task-item');
+            const totalTasks = tasks.length;
+            const completedTasks = Array.from(tasks).filter(task => 
+                task.dataset.completed === 'true').length;
+            
+            totalTasksEl.textContent = totalTasks;
+            completedTasksEl.textContent = completedTasks;
+            pendingTasksEl.textContent = totalTasks - completedTasks;
         }
         
         // Update empty state display
         function updateEmptyState() {
-            if (taskCount === 0) {
+            const tasks = document.querySelectorAll('.task-item');
+            if (tasks.length === 0) {
                 emptyState.style.display = 'block';
             } else {
                 emptyState.style.display = 'none';
+            }
+        }
+        
+        // Update all UI elements
+        function updateUI() {
+            updateTaskCounters();
+            updateEmptyState();
+            applyFilter();
+        }
+        
+        // Save tasks to localStorage
+        function saveTasks() {
+            const tasks = [];
+            const taskElements = document.querySelectorAll('.task-item');
+            
+            taskElements.forEach(task => {
+                tasks.push({
+                    id: task.dataset.id,
+                    text: task.querySelector('.task-text').textContent,
+                    completed: task.dataset.completed === 'true'
+                });
+            });
+            
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            
+            // Show save confirmation
+            storageStatus.textContent = "Tasks saved!";
+            storageStatus.style.color = "#4CAF50";
+            setTimeout(() => {
+                storageStatus.textContent = "Local storage ready";
+                storageStatus.style.color = "#6c757d";
+            }, 2000);
+        }
+        
+        // Load tasks from localStorage
+        function loadTasks() {
+            const savedTasks = localStorage.getItem('tasks');
+            
+            if (savedTasks) {
+                try {
+                    const tasks = JSON.parse(savedTasks);
+                    
+                    tasks.forEach(task => {
+                        addTask(task.text, task.completed, true);
+                    });
+                    
+                    storageStatus.textContent = "Tasks loaded!";
+                    storageStatus.style.color = "#4CAF50";
+                    setTimeout(() => {
+                        storageStatus.textContent = "Local storage ready";
+                        storageStatus.style.color = "#6c757d";
+                    }, 2000);
+                } catch (e) {
+                    storageStatus.textContent = "Error loading tasks!";
+                    storageStatus.style.color = "#f44336";
+                    console.error("Error parsing tasks from localStorage:", e);
+                }
             }
         }
     </script>
